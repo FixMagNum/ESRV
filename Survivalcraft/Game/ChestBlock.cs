@@ -1,0 +1,75 @@
+using Engine;
+
+namespace Game;
+
+public class ChestBlock : CubeBlock
+{
+	public const int Index = 45;
+
+	public override int GetFaceTextureSlot(int face, int value)
+	{
+		return face switch
+		{
+			4 => 42, 
+			5 => 42, 
+			_ => Terrain.ExtractData(value) switch
+			{
+				0 => face switch
+				{
+					0 => 27, 
+					2 => 26, 
+					_ => 25, 
+				}, 
+				1 => face switch
+				{
+					1 => 27, 
+					3 => 26, 
+					_ => 25, 
+				}, 
+				2 => face switch
+				{
+					2 => 27, 
+					0 => 26, 
+					_ => 25, 
+				}, 
+				_ => face switch
+				{
+					3 => 27, 
+					1 => 26, 
+					_ => 25, 
+				}, 
+			}, 
+		};
+	}
+
+	public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain, ComponentMiner componentMiner, int value, TerrainRaycastResult raycastResult)
+	{
+		Vector3 forward = Matrix.CreateFromQuaternion(componentMiner.ComponentCreature.ComponentCreatureModel.EyeRotation).Forward;
+		float num = Vector3.Dot(forward, Vector3.UnitZ);
+		float num2 = Vector3.Dot(forward, Vector3.UnitX);
+		float num3 = Vector3.Dot(forward, -Vector3.UnitZ);
+		float num4 = Vector3.Dot(forward, -Vector3.UnitX);
+		int data = 0;
+		if (num == MathUtils.Max(num, num2, num3, num4))
+		{
+			data = 2;
+		}
+		else if (num2 == MathUtils.Max(num, num2, num3, num4))
+		{
+			data = 3;
+		}
+		else if (num3 == MathUtils.Max(num, num2, num3, num4))
+		{
+			data = 0;
+		}
+		else if (num4 == MathUtils.Max(num, num2, num3, num4))
+		{
+			data = 1;
+		}
+		return new BlockPlacementData
+		{
+			Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, 45), data),
+			CellFace = raycastResult.CellFace
+		};
+	}
+}

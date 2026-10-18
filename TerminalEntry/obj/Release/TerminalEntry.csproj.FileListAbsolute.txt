@@ -1,0 +1,16 @@
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\TerminalEntry.exe
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\TerminalEntry.pdb
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\Engine.dll
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\EntitySystem.dll
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\Survivalcraft.exe
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\LiteNetLib.dll
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\Engine.pdb
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\EntitySystem.pdb
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\Survivalcraft.pdb
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\Survivalcraft.exe.config
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\bin\Release\LiteNetLib.xml
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\obj\Release\TerminalEntry.csproj.AssemblyReference.cache
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\obj\Release\TerminalEntry.csproj.CoreCompileInputs.cache
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\obj\Release\Terminal.DF37CE4A.Up2Date
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\obj\Release\TerminalEntry.exe
+D:\FIXPIX\source\repos\ESRV\TerminalEntry\obj\Release\TerminalEntry.pdb

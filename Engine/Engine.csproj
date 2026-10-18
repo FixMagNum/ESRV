@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Engine</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net472</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <NoWarn>CS0169;CS0649;CS0414;CS0219;CS0162;CS1717;CS0675;CS0067;CS1998;CS0108;MSB3243;CS0114;CS0618</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Engine.Resources.Debugfont.lst" />
+    <None Remove="Engine.Resources.Debugfont.png" />
+    <None Remove="Engine.Resources.Lit.psh" />
+    <None Remove="Engine.Resources.Unlit.psh" />
+    <None Remove="Engine.Resources.Lit.vsh" />
+    <None Remove="Engine.Resources.Unlit.vsh" />
+    <EmbeddedResource Include="Engine.Resources.Debugfont.lst" LogicalName="Engine.Resources.Debugfont.lst" />
+    <EmbeddedResource Include="Engine.Resources.Debugfont.png" LogicalName="Engine.Resources.Debugfont.png" />
+    <EmbeddedResource Include="Engine.Resources.Lit.psh" LogicalName="Engine.Resources.Lit.psh">
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Engine.Resources.Unlit.psh" LogicalName="Engine.Resources.Unlit.psh">
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Engine.Resources.Lit.vsh" LogicalName="Engine.Resources.Lit.vsh">
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Engine.Resources.Unlit.vsh" LogicalName="Engine.Resources.Unlit.vsh">
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+</Project>
+
+

@@ -1,0 +1,36 @@
+namespace Game.NetWork;
+
+public enum PacketType : byte
+{
+	Pickable = 0,
+	SubsystemBody = 1,
+	SubsystemTerrain = 2,
+	ComponentPlayer = 3,
+	ComponentVitalStat = 4,
+	ComponentClothing = 5,
+	PlayerData = 6,
+	Message = 7,
+	SubsystemTime = 8,
+	SubsystemSky = 9,
+	SubsystemWeather = 10,
+	SubsystemInventory = 11,
+	ComponentBehavior = 12,
+	Entity = 13,
+	ComponentHealth = 14,
+	SubsystemElectricity = 15,
+	Projectile = 16,
+	ComponentMount = 17,
+	ComponentSickness = 18,
+	ComponentFlu = 19,
+	ComponentOnFire = 20,
+	ComponentSleep = 31,
+	ComponentFurnace = 32,
+	Territoriy = 33,
+	Furniture = 34,
+	Explosion = 35,
+	MovingBlockSet = 36,
+	InventoryOpen = 37,
+	SubsystemPlayers = 38,
+	ModPackage = byte.MaxValue,
+	ComponentFurnace2 = 30
+}

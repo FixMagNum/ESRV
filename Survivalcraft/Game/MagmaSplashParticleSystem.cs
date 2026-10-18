@@ -1,0 +1,129 @@
+using Engine;
+using Engine.Graphics;
+
+namespace Game;
+
+public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSystem.Particle>
+{
+	public class Particle : Game.Particle
+	{
+		public Vector3 Velocity;
+
+		public float TimeToLive;
+
+		public float Duration;
+	}
+
+	public Random m_random = new Random();
+
+	public SubsystemTerrain m_subsystemTerrain;
+
+	public Vector3 m_position;
+
+	public float m_time;
+
+	public MagmaSplashParticleSystem(SubsystemTerrain terrain, Vector3 position, bool large)
+		: base(40)
+	{
+		m_subsystemTerrain = terrain;
+		m_position = position;
+		Texture = ContentManager.Get<Texture2D>("Textures/MagmaSplashParticle");
+		TextureSlotsCount = 2;
+		int ambientTracks = Terrain.ToCell(position.X);
+		int trackName = Terrain.ToCell(position.Y);
+		int num = Terrain.ToCell(position.Z);
+		int x = 0;
+		x = MathUtils.Max(x, terrain.Terrain.GetCellLight(ambientTracks + 1, trackName, num));
+		x = MathUtils.Max(x, terrain.Terrain.GetCellLight(ambientTracks - 1, trackName, num));
+		x = MathUtils.Max(x, terrain.Terrain.GetCellLight(ambientTracks, trackName + 1, num));
+		x = MathUtils.Max(x, terrain.Terrain.GetCellLight(ambientTracks, trackName - 1, num));
+		x = MathUtils.Max(x, terrain.Terrain.GetCellLight(ambientTracks, trackName, num + 1));
+		x = MathUtils.Max(x, terrain.Terrain.GetCellLight(ambientTracks, trackName, num - 1));
+		Color white = Color.White;
+		float num2 = LightingManager.LightIntensityByLightValue[x];
+		white *= num2;
+		white.A = byte.MaxValue;
+		float num3 = (large ? 1.5f : 1f);
+		for (int i = 0; i < Particles.Length; i++)
+		{
+			Particle obj = Particles[i];
+			obj.IsActive = true;
+			obj.Position = position;
+			obj.Color = white;
+			obj.Size = new Vector2(0.2f * num3);
+			obj.TimeToLive = (obj.Duration = m_random.Float(0.5f, 3.5f));
+			Vector3 vector = 4f * m_random.Float(0.1f, 1f) * Vector3.Normalize(new Vector3(m_random.Float(-1f, 1f), 0f, m_random.Float(-1f, 1f)));
+			obj.Velocity = num3 * (vector + new Vector3(0f, m_random.Float(0f, 4f), 0f));
+		}
+	}
+
+	public override bool Simulate(float dt)
+	{
+		dt = MathUtils.Clamp(dt, 0f, 0.1f);
+		float num = MathUtils.Pow(0.015f, dt);
+		m_time += dt;
+		bool flag = false;
+		for (int i = 0; i < Particles.Length; i++)
+		{
+			Particle particle = Particles[i];
+			if (!particle.IsActive)
+			{
+				continue;
+			}
+			flag = true;
+			particle.Position += particle.Velocity * dt;
+			Particle particle2 = particle;
+			particle2.Velocity.Y = particle2.Velocity.Y + -10f * dt;
+			particle.Velocity *= num;
+			particle.Color *= MathUtils.Saturate(particle.TimeToLive);
+			particle.TimeToLive -= dt;
+			particle.TextureSlot = (int)(3.99f * particle.TimeToLive / particle.Duration);
+			particle.FlipX = m_random.Sign() > 0;
+			particle.FlipY = m_random.Sign() > 0;
+			if (particle.TimeToLive <= 0f || particle.Size.X <= 0f)
+			{
+				particle.IsActive = false;
+				continue;
+			}
+			int cellValue = m_subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(particle.Position.X), Terrain.ToCell(particle.Position.Y), Terrain.ToCell(particle.Position.Z));
+			int num2 = Terrain.ExtractContents(cellValue);
+			if (num2 == 0)
+			{
+				continue;
+			}
+			Block block = BlocksManager.Blocks[num2];
+			if (block.IsCollidable)
+			{
+				particle.IsActive = true;
+			}
+			else if (block is MagmaBlock)
+			{
+				int level = FluidBlock.GetLevel(Terrain.ExtractData(cellValue));
+				float levelHeight = ((MagmaBlock)block).GetLevelHeight(level);
+				if (particle.Position.Y <= MathUtils.Floor(particle.Position.Y) + levelHeight)
+				{
+					particle.Velocity.Y = 0f;
+					float num3 = Vector2.Distance(new Vector2(particle.Position.X, particle.Position.Z), new Vector2(m_position.X, m_position.Z));
+					float num4 = 0.02f * MathUtils.Sin(2f * num3 + 10f * m_time);
+					particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight + num4;
+					particle.TimeToLive -= 1f * dt;
+					particle.Size -= new Vector2(0.04f * dt);
+				}
+			}
+			else if (block is FocalorsFluidBlock)
+			{
+				float levelHeight2 = FocalorsFluidBlock.GetLevelHeight(FocalorsFluidBlock.GetLevel(Terrain.ExtractData(cellValue)));
+				if (particle.Position.Y <= MathUtils.Floor(particle.Position.Y) + levelHeight2)
+				{
+					particle.Velocity.Y = 0f;
+					float num5 = Vector2.Distance(new Vector2(particle.Position.X, particle.Position.Z), new Vector2(m_position.X, m_position.Z));
+					float num6 = 0.02f * MathUtils.Sin(2f * num5 + 10f * m_time);
+					particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight2 + num6;
+					particle.TimeToLive -= 1f * dt;
+					particle.Size -= new Vector2(0.04f * dt);
+				}
+			}
+		}
+		return !flag;
+	}
+}

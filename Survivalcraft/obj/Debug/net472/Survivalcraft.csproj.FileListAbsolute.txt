@@ -1,0 +1,17 @@
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Survivalcraft.exe.config
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Survivalcraft.exe
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Survivalcraft.pdb
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Engine.dll
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\EntitySystem.dll
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\LiteNetLib.dll
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Newtonsoft.Json.dll
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Engine.pdb
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\EntitySystem.pdb
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\LiteNetLib.xml
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\bin\Debug\net472\Newtonsoft.Json.xml
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\obj\Debug\net472\Survivalcraft.csproj.AssemblyReference.cache
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\obj\Debug\net472\Survivalcraft.GeneratedMSBuildEditorConfig.editorconfig
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\obj\Debug\net472\Survivalcraft.csproj.CoreCompileInputs.cache
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\obj\Debug\net472\Survival.5EAC37F4.Up2Date
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\obj\Debug\net472\Survivalcraft.exe
+D:\FIXPIX\source\repos\ESRV\Survivalcraft\obj\Debug\net472\Survivalcraft.pdb

@@ -1,0 +1,10 @@
+D:\FIXPIX\source\repos\ESRV\EntitySystem\bin\Debug\net472\EntitySystem.dll
+D:\FIXPIX\source\repos\ESRV\EntitySystem\bin\Debug\net472\EntitySystem.pdb
+D:\FIXPIX\source\repos\ESRV\EntitySystem\bin\Debug\net472\Engine.dll
+D:\FIXPIX\source\repos\ESRV\EntitySystem\bin\Debug\net472\Engine.pdb
+D:\FIXPIX\source\repos\ESRV\EntitySystem\obj\Debug\net472\EntitySystem.csproj.AssemblyReference.cache
+D:\FIXPIX\source\repos\ESRV\EntitySystem\obj\Debug\net472\EntitySystem.GeneratedMSBuildEditorConfig.editorconfig
+D:\FIXPIX\source\repos\ESRV\EntitySystem\obj\Debug\net472\EntitySystem.csproj.CoreCompileInputs.cache
+D:\FIXPIX\source\repos\ESRV\EntitySystem\obj\Debug\net472\EntitySy.F4301A2B.Up2Date
+D:\FIXPIX\source\repos\ESRV\EntitySystem\obj\Debug\net472\EntitySystem.dll
+D:\FIXPIX\source\repos\ESRV\EntitySystem\obj\Debug\net472\EntitySystem.pdb

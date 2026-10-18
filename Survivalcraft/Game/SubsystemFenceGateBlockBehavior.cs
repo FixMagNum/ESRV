@@ -1,0 +1,105 @@
+using Engine;
+using TemplatesDatabase;
+
+namespace Game;
+
+public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
+{
+	public SubsystemElectricity m_subsystemElectricity;
+
+	public static Random m_random;
+
+	public override int[] HandledBlocks => new int[0];
+
+	public bool OpenCloseGate(int x, int y, int z, bool open)
+	{
+		int cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
+		int num = Terrain.ExtractContents(cellValue);
+		if (BlocksManager.Blocks[num] is FenceGateBlock)
+		{
+			int data = FenceGateBlock.SetOpen(Terrain.ExtractData(cellValue), open);
+			int value = Terrain.ReplaceData(cellValue, data);
+			SubsystemTerrain.ChangeCell(x, y, z, value);
+			string name = (open ? "Audio/Doors/DoorOpen" : "Audio/Doors/DoorClose");
+			SubsystemTerrain.Project.FindSubsystem<SubsystemAudio>(throwOnError: true).PlaySound(name, 0.7f, m_random.Float(-0.1f, 0.1f), new Vector3(x, y, z), 4f, autoDelay: true);
+			return true;
+		}
+		return false;
+	}
+
+	public bool IsGateElectricallyConnected(int x, int y, int z)
+	{
+		int cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
+		int num = Terrain.ExtractContents(cellValue);
+		int data = Terrain.ExtractData(cellValue);
+		if (BlocksManager.Blocks[num] is FenceGateBlock)
+		{
+			ElectricElement electricElement = m_subsystemElectricity.GetElectricElement(x, y, z, FenceGateBlock.GetHingeFace(data));
+			if (electricElement != null && electricElement.Connections.Count > 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
+	{
+		CellFace cellFace = raycastResult.CellFace;
+		int cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
+		int num = Terrain.ExtractContents(cellValue);
+		int data = Terrain.ExtractData(cellValue);
+		if (num == 166 || !IsGateElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
+		{
+			bool open = FenceGateBlock.GetOpen(data);
+			return OpenCloseGate(cellFace.X, cellFace.Y, cellFace.Z, !open);
+		}
+		return true;
+	}
+
+	public override void Load(ValuesDictionary valuesDictionary)
+	{
+		base.Load(valuesDictionary);
+		m_subsystemElectricity = Project.FindSubsystem<SubsystemElectricity>(throwOnError: true);
+	}
+
+	static SubsystemFenceGateBlockBehavior()
+	{
+		m_random = new Random();
+	}
+
+	public override bool OnInteract(MovingBlocksRaycastResult raycastResult, Point3 offset, ComponentMiner componentMiner)
+	{
+		if (!(raycastResult.MovingBlockSet is SubsystemMovingBlocks.MovingBlockSet movingBlockSet))
+		{
+			return false;
+		}
+		int num = 0;
+		for (int i = 0; i < movingBlockSet.Blocks.Count; i++)
+		{
+			if (movingBlockSet.Blocks[i].Offset == offset)
+			{
+				num = movingBlockSet.Blocks[i].Value;
+				break;
+			}
+		}
+		if (num == 0)
+		{
+			return false;
+		}
+		int num2 = Terrain.ExtractContents(num);
+		int data = Terrain.ExtractData(num);
+		if (num2 != 166 && num2 != 194)
+		{
+			return false;
+		}
+		bool open = FenceGateBlock.GetOpen(data);
+		int data2 = FenceGateBlock.SetOpen(data, !open);
+		int newValue = Terrain.ReplaceData(num, data2);
+		Project.FindSubsystem<SubsystemFloatingBlockBehavior>(throwOnError: true).ModifyMovingBlock(movingBlockSet, offset, newValue);
+		string name = ((!open) ? "Audio/Doors/DoorOpen" : "Audio/Doors/DoorClose");
+		componentMiner.m_subsystemAudio.PlaySound(name, 0.7f, 0f, raycastResult.HitPoint(), 4f, autoDelay: true);
+		componentMiner.Poke(forceRestart: false);
+		return true;
+	}
+}
