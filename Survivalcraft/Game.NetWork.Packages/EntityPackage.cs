@@ -83,6 +83,13 @@ public class EntityPackage : IPackage
 
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
+		// Only the server creates and sends entity lists and removals. A client that sends one
+		// is trying to spawn or delete entities (any id), so it is refused.
+		if (isServer)
+		{
+			ServerSecurity.Warn(From, "entity packet from a client", "type=" + m_type);
+			return;
+		}
 		switch (m_type)
 		{
 		case EventType.LoadList:

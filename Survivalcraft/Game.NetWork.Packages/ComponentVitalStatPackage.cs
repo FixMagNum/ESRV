@@ -107,8 +107,36 @@ public class ComponentVitalStatPackage : IPackage
 		}
 	}
 
+	private bool IsServerOwnStatAllowed()
+	{
+		PlayerData playerData = (From != null) ? From.PlayerData : null;
+		ComponentPlayer componentPlayer = (playerData != null) ? playerData.ComponentPlayer : null;
+		if (componentPlayer == null || componentPlayer.Entity == null || componentPlayer.Entity.EntityId != m_entityId)
+		{
+			ServerSecurity.Warn(From, "vital stats of another entity", "target=" + m_entityId);
+			return false;
+		}
+		return true;
+	}
+
+	private bool IsServerEatAllowed(IInventory inventory)
+	{
+		PlayerData playerData = (From != null) ? From.PlayerData : null;
+		if (playerData == null || inventory == null || m_slotIndex < 0 || m_slotIndex >= inventory.SlotsCount || !ServerSecurity.CanAccessInventory(playerData, inventory))
+		{
+			ServerSecurity.Warn(From, "eat from an inaccessible inventory", "inventory=" + m_inventoryId);
+			return false;
+		}
+		return true;
+	}
+
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
+		// On the server a client may only change its own vital stats.
+		if (isServer && !IsServerOwnStatAllowed())
+		{
+			return;
+		}
 		switch (m_eventType)
 		{
 		case EventType.SyncStat:
@@ -139,6 +167,11 @@ public class ComponentVitalStatPackage : IPackage
 				{
 					projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, (IInventory inventory) =>
 					{
+						// On the server the inventory must be one the player can reach, and the slot must exist.
+						if (isServer && !IsServerEatAllowed(inventory))
+						{
+							return;
+						}
 						if (inventory.GetSlotValue(m_slotIndex) == m_foodValue)
 						{
 							m_vitalStats.NetEat(inventory, m_slotIndex, m_foodValue);
