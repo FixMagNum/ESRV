@@ -1,7 +1,0 @@
-D:\FIXPIX\source\repos\ESRV\Engine\bin\Debug\net472\Engine.dll
-D:\FIXPIX\source\repos\ESRV\Engine\bin\Debug\net472\Engine.pdb
-D:\FIXPIX\source\repos\ESRV\Engine\obj\Debug\net472\Engine.csproj.AssemblyReference.cache
-D:\FIXPIX\source\repos\ESRV\Engine\obj\Debug\net472\Engine.GeneratedMSBuildEditorConfig.editorconfig
-D:\FIXPIX\source\repos\ESRV\Engine\obj\Debug\net472\Engine.csproj.CoreCompileInputs.cache
-D:\FIXPIX\source\repos\ESRV\Engine\obj\Debug\net472\Engine.dll
-D:\FIXPIX\source\repos\ESRV\Engine\obj\Debug\net472\Engine.pdb
