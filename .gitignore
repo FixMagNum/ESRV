@@ -1,0 +1,20 @@
+# Build results
+**/bin/
+**/obj/
+
+# IDE's and editors
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# System files
+.DS_Store
+Thumbs.db
+
+# NuGet packages
+*.nuget.props
+*.nuget.targets
+packages/
