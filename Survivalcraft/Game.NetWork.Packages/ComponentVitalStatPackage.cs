@@ -1,3 +1,4 @@
+using Engine;
 using GameEntitySystem;
 
 namespace Game.NetWork.Packages;
@@ -113,18 +114,8 @@ public class ComponentVitalStatPackage : IPackage
 		ComponentPlayer componentPlayer = (playerData != null) ? playerData.ComponentPlayer : null;
 		if (componentPlayer == null || componentPlayer.Entity == null || componentPlayer.Entity.EntityId != m_entityId)
 		{
-			ServerSecurity.Warn(From, "vital stats of another entity", "target=" + m_entityId);
-			return false;
-		}
-		return true;
-	}
-
-	private bool IsServerEatAllowed(IInventory inventory)
-	{
-		PlayerData playerData = (From != null) ? From.PlayerData : null;
-		if (playerData == null || inventory == null || m_slotIndex < 0 || m_slotIndex >= inventory.SlotsCount || !ServerSecurity.CanAccessInventory(playerData, inventory))
-		{
-			ServerSecurity.Warn(From, "eat from an inaccessible inventory", "inventory=" + m_inventoryId);
+			string own = (componentPlayer == null) ? "player=null" : ((componentPlayer.Entity == null) ? "entity=null" : "own=" + componentPlayer.Entity.EntityId.ToString());
+			ServerSecurity.Warn(From, "vital stats of another entity", "target=" + m_entityId + ", " + own + ", type=" + m_eventType.ToString());
 			return false;
 		}
 		return true;
@@ -132,6 +123,12 @@ public class ComponentVitalStatPackage : IPackage
 
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
+		// Eating is applied only through the inventory drag-drop path, which also removes the item on the server.
+		// A client's Eat packet would grant food without consuming anything, so the server ignores it.
+		if (isServer && m_eventType == EventType.Eat)
+		{
+			return;
+		}
 		// On the server a client may only change its own vital stats.
 		if (isServer && !IsServerOwnStatAllowed())
 		{
@@ -148,6 +145,11 @@ public class ComponentVitalStatPackage : IPackage
 					if (isServer)
 					{
 						componentVitalStats.Stamina = Stamina;
+						// Food is server-authoritative: the client may only lower it; raising comes from eating on the server.
+						if (Food < componentVitalStats.Food && Time.RealTime - componentVitalStats.m_lastFoodGainTime > 2.0)
+						{
+							componentVitalStats.Food = Food;
+						}
 					}
 					else
 					{
@@ -156,27 +158,6 @@ public class ComponentVitalStatPackage : IPackage
 						componentVitalStats.Wetness = Wetness;
 						componentVitalStats.Temperature = Temperature;
 					}
-				}
-			});
-			break;
-		case EventType.Eat:
-			projectNet.FindEntityById(m_entityId, (Entity entity) =>
-			{
-				ComponentVitalStats m_vitalStats = entity.FindComponent<ComponentVitalStats>();
-				if (m_vitalStats != null)
-				{
-					projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, (IInventory inventory) =>
-					{
-						// On the server the inventory must be one the player can reach, and the slot must exist.
-						if (isServer && !IsServerEatAllowed(inventory))
-						{
-							return;
-						}
-						if (inventory.GetSlotValue(m_slotIndex) == m_foodValue)
-						{
-							m_vitalStats.NetEat(inventory, m_slotIndex, m_foodValue);
-						}
-					});
 				}
 			});
 			break;

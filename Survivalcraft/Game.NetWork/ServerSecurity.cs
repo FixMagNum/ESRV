@@ -150,6 +150,65 @@ public static class ServerSecurity
 		return num * num + num2 * num2 + num3 * num3 <= 100f;
 	}
 
+	private static bool PlayerOwnsBag(PlayerData player, BagInventory bag)
+	{
+		ComponentPlayer componentPlayer = player.ComponentPlayer;
+		if (componentPlayer == null || componentPlayer.Entity == null)
+		{
+			return false;
+		}
+		SubsystemBags bags = bag.Project.FindSubsystem<SubsystemBags>(throwOnError: false);
+		if (bags == null)
+		{
+			return false;
+		}
+		// A bag can only be opened from an item the player carries or wears (the item stores the bag id).
+		foreach (Component component in componentPlayer.Entity.Components)
+		{
+			IInventory playerInventory = component as IInventory;
+			if (playerInventory == null)
+			{
+				continue;
+			}
+			for (int i = 0; i < playerInventory.SlotsCount; i++)
+			{
+				int bagId = BagIdOf(playerInventory.GetSlotValue(i));
+				if (bagId > 0 && bags.Find(bagId) == bag)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static int BagIdOf(int value)
+	{
+		if (value == 0)
+		{
+			return -1;
+		}
+		Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+		int data = Terrain.ExtractData(value);
+		if (block is BagBlock)
+		{
+			return BagBlock.GetBagId(data);
+		}
+		if (block is LargeBagBlock)
+		{
+			return LargeBagBlock.GetBagId(data);
+		}
+		if (block is BackpackBlock)
+		{
+			return BackpackBlock.GetBagId(data);
+		}
+		if (block is ClimbingBackpackBlock)
+		{
+			return ClimbingBackpackBlock.GetBagId(data);
+		}
+		return -1;
+	}
+
 	public static bool CanAccessInventory(PlayerData player, IInventory inventory)
 	{
 		if (player == null || inventory == null)
@@ -160,9 +219,9 @@ public static class ServerSecurity
 		{
 			return true;
 		}
-		if (inventory is BagInventory)
+		if (inventory is BagInventory bagInventory)
 		{
-			return true;
+			return PlayerOwnsBag(player, bagInventory);
 		}
 		if (!(inventory is Component { Entity: not null } component))
 		{

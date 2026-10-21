@@ -30,6 +30,8 @@ public class ComponentVitalStats : Component, IUpdateable
 
 	public float m_food;
 
+	public double m_lastFoodGainTime = -100.0;
+
 	public float m_stamina;
 
 	public float m_sleep;
@@ -319,6 +321,7 @@ public class ComponentVitalStats : Component, IUpdateable
 			num3 *= 0.75f;
 		}
 		Food += num3;
+		m_lastFoodGainTime = Time.RealTime;
 		m_satiation.TryGetValue(num, out var value2);
 		value2 += MathUtils.Max(num3, 0.5f);
 		m_satiation[num] = value2;
