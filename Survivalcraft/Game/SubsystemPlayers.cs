@@ -1144,6 +1144,9 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 		return BlackPlayerGuidList.Contains(guid.ToString());
 	}
 
+	// The GUID comes from the client and can be changed, so IP and hardware id are checked as well.
+	// Ban records are stored as "name|ip|hwid". An empty value from the client never matches,
+	// and it does not skip the other checks.
 	public bool IsBanned(Guid guid, string ipAddress, string hardwareId)
 	{
 		string num = guid.ToString();
@@ -1151,15 +1154,22 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 		{
 			return true;
 		}
-		if (string.IsNullOrEmpty(hardwareId))
+		bool hasIp = !string.IsNullOrEmpty(ipAddress);
+		bool hasHwid = !string.IsNullOrEmpty(hardwareId);
+		if (!hasIp && !hasHwid)
 		{
 			return false;
 		}
 		foreach (KeyValuePair<string, string> blackPlayerName in BlackPlayerNames)
 		{
 			string[] array = (blackPlayerName.Value ?? string.Empty).Split('|');
-			string text = ((array.Length >= 3) ? array[2] : string.Empty);
-			if (!string.IsNullOrEmpty(text) && string.Equals(hardwareId, text, StringComparison.OrdinalIgnoreCase))
+			string bannedIp = (array.Length >= 2) ? array[1] : string.Empty;
+			string bannedHwid = (array.Length >= 3) ? array[2] : string.Empty;
+			if (hasIp && !string.IsNullOrEmpty(bannedIp) && string.Equals(ipAddress, bannedIp, StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+			if (hasHwid && !string.IsNullOrEmpty(bannedHwid) && string.Equals(hardwareId, bannedHwid, StringComparison.OrdinalIgnoreCase))
 			{
 				return true;
 			}
