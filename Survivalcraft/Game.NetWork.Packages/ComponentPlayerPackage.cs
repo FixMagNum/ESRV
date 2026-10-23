@@ -468,6 +468,18 @@ public class ComponentPlayerPackage : IPackage
 		}
 	}
 
+	private bool IsServerDragDropAllowed(ProjectNet projectNet)
+	{
+		PlayerData playerData = (From != null) ? From.PlayerData : null;
+		IInventory inventory = projectNet.FindSubsystem<SubsystemInventories>().GetInventoryById(m_inventory_id);
+		if (playerData == null || inventory == null || m_ActiveSlot < 0 || m_ActiveSlot >= inventory.SlotsCount || m_count <= 0 || !ServerSecurity.CanAccessInventory(playerData, inventory))
+		{
+			ServerSecurity.Warn(From, "drag drop from an inaccessible inventory", "inventory=" + m_inventory_id + ", slot=" + m_ActiveSlot + ", count=" + m_count);
+			return false;
+		}
+		return true;
+	}
+
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
 		if (isServer)
@@ -663,6 +675,11 @@ public class ComponentPlayerPackage : IPackage
 			});
 			break;
 		case PlayerAction.DragDrop:
+			// On the server only inventories the player may access, with a real slot and count, can be dropped into the world.
+			if (isServer && !IsServerDragDropAllowed(projectNet))
+			{
+				break;
+			}
 			PlayerEvent((ComponentPlayer player) =>
 			{
 				projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventory_id, (IInventory inventory) =>

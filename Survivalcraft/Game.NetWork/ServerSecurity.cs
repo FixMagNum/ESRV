@@ -227,6 +227,16 @@ public static class ServerSecurity
 		{
 			return false;
 		}
+		// Every player has a creative inventory component, but its items are infinite.
+		// Only a creative world may use it; a survival world must never hand out those items.
+		if (component is ComponentCreativeInventory)
+		{
+			SubsystemGameInfo gameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>(throwOnError: false);
+			if (gameInfo == null || gameInfo.WorldSettings == null || gameInfo.WorldSettings.GameMode != GameMode.Creative)
+			{
+				return false;
+			}
+		}
 		ComponentPlayer componentPlayer = player.ComponentPlayer;
 		if (componentPlayer != null && component.Entity == componentPlayer.Entity)
 		{

@@ -172,8 +172,11 @@ public class PickablePackage : IPackage
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
 		SubsystemPickables subsystemPickable = projectNet.FindSubsystem<SubsystemPickables>();
-		if (((m_type == PickType.Update) & isServer) || (isServer && m_type == PickType.Create && !IsServerCreateAllowed()))
+		// Only the server creates, updates and deletes pickables (drops, loot, pickups are all server-side).
+		// A client sending one of these is refused. Clients may still ask for a missing pickable (RequestSync).
+		if (isServer && (m_type == PickType.Create || m_type == PickType.Update || m_type == PickType.Delete))
 		{
+			ServerSecurity.Warn(From, "pickable packet from a client", "type=" + m_type + ", id=" + m_id);
 			return;
 		}
 		switch (m_type)
@@ -257,20 +260,5 @@ public class PickablePackage : IPackage
 			});
 			break;
 		}
-	}
-
-	private bool IsServerCreateAllowed()
-	{
-		if (From == null || From.PlayerData == null || From.PlayerData.ComponentPlayer == null)
-		{
-			return false;
-		}
-		ComponentBody componentBody = From.PlayerData.ComponentPlayer.ComponentBody;
-		if (componentBody != null && Vector3.Distance(componentBody.Position, m_position) > 14f)
-		{
-			ServerSecurity.Warn(From, "pickable created far from the player", "id=" + m_id);
-			return false;
-		}
-		return true;
 	}
 }
