@@ -172,9 +172,9 @@ public class PickablePackage : IPackage
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
 		SubsystemPickables subsystemPickable = projectNet.FindSubsystem<SubsystemPickables>();
-		// Only the server creates, updates and deletes pickables (drops, loot, pickups are all server-side).
+		// Only the server creates, updates, deletes and moves pickables (drops, loot, pickups are all server-side).
 		// A client sending one of these is refused. Clients may still ask for a missing pickable (RequestSync).
-		if (isServer && (m_type == PickType.Create || m_type == PickType.Update || m_type == PickType.Delete))
+		if (isServer && (m_type == PickType.Create || m_type == PickType.Update || m_type == PickType.Delete || m_type == PickType.SetFlyToPosition))
 		{
 			ServerSecurity.Warn(From, "pickable packet from a client", "type=" + m_type + ", id=" + m_id);
 			return;

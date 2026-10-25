@@ -1,3 +1,4 @@
+using Engine;
 using GameEntitySystem;
 
 namespace Game.NetWork.Packages;
@@ -59,8 +60,34 @@ public class ComponentMountPackage : IPackage
 		m_targetId = reader.ReadUInt16();
 	}
 
+	private bool IsServerMountAllowed()
+	{
+		PlayerData playerData = (From != null) ? From.PlayerData : null;
+		ComponentPlayer player = (playerData != null) ? playerData.ComponentPlayer : null;
+		if (player == null || player.Entity == null)
+		{
+			return false;
+		}
+		if (m_fromId != player.Entity.EntityId)
+		{
+			ServerSecurity.Warn(From, "mount action for another entity", "type=" + m_type + ", from=" + m_fromId + ", own=" + player.Entity.EntityId);
+			return false;
+		}
+		return true;
+	}
+
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
+		if (isServer && !IsServerMountAllowed())
+		{
+			return;
+		}
+		// Clients only ask (MountRequest, DismountRequest). Mount and Dismount are sent by the server only.
+		if (isServer && (m_type == EventType.Mount || m_type == EventType.Dismount))
+		{
+			ServerSecurity.Warn(From, "mount state set by a client", "type=" + m_type);
+			return;
+		}
 		switch (m_type)
 		{
 		case EventType.Dismount:
@@ -115,6 +142,12 @@ public class ComponentMountPackage : IPackage
 					ComponentMount componentMount = entity2.FindComponent<ComponentMount>();
 					if (componentMount != null && rider != null)
 					{
+						// On the server the rider must be close to the mount (same reach as an interaction).
+						if (isServer && Vector3.Distance(rider.ComponentCreature.ComponentBody.Position, componentMount.ComponentBody.Position) > 6f)
+						{
+							ServerSecurity.Warn(From, "mount request out of reach", "target=" + m_targetId);
+							return;
+						}
 						rider.StartMounting(componentMount);
 					}
 				});

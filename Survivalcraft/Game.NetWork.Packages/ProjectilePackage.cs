@@ -109,6 +109,13 @@ public class ProjectilePackage : IPackage
 
 	public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
 	{
+		// Projectiles are created only by the server (FireProjectile/AddProjectile return null on clients),
+		// so a client sending one is refused.
+		if (isServer)
+		{
+			ServerSecurity.Warn(From, "projectile packet from a client", "owner=" + m_ownerId);
+			return;
+		}
 		SubsystemProjectiles xElement = projectNet.FindSubsystem<SubsystemProjectiles>();
 		ComponentCreature creature = null;
 		projectNet.FindEntityById(m_ownerId, (Entity entity) =>
@@ -123,10 +130,6 @@ public class ProjectilePackage : IPackage
 		else if (m_tailInfo == ProjectileTailInfo.Fireworks)
 		{
 			xElement.AddTrail(projectile, m_trailOfffset, new FireworksTrailParticleSystem());
-		}
-		if (isServer)
-		{
-			netNode.QueuePackage(this);
 		}
 	}
 }

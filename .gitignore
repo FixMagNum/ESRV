@@ -1,6 +1,7 @@
 # Build results
 **/bin/
 **/obj/
+**/build.bat
 
 # IDE's and editors
 .vscode/
