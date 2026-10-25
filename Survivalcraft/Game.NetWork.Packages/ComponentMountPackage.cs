@@ -143,7 +143,7 @@ public class ComponentMountPackage : IPackage
 					if (componentMount != null && rider != null)
 					{
 						// On the server the rider must be close to the mount (same reach as an interaction).
-						if (isServer && Vector3.Distance(rider.ComponentCreature.ComponentBody.Position, componentMount.ComponentBody.Position) > 6f)
+						if (isServer && Vector3.Distance(rider.ComponentCreature.ComponentBody.Position, componentMount.ComponentBody.Position) > 2.5f)
 						{
 							ServerSecurity.Warn(From, "mount request out of reach", "target=" + m_targetId);
 							return;
