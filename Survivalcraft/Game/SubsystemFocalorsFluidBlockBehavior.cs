@@ -56,6 +56,9 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 
 	private List<Point2> m_cachedPlayerPositions = new List<Point2>();
 
+	private readonly Dictionary<long, bool> m_oceanColumnCache = new Dictionary<long, bool>();
+
+
 	public SubsystemAudio SubsystemAudio { get; set; }
 
 	public SubsystemAmbientSounds SubsystemAmbientSounds { get; set; }
@@ -94,6 +97,15 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 
 	public void SpreadFluid()
 	{
+		SpreadFluidStep(double.PositiveInfinity, m_subsystemGameInfo.WorldSettings.FluidUpdateQuota);
+	}
+
+	public int m_lastStepProcessed;
+
+	public void SpreadFluidStep(double budgetMs, int quota)
+	{
+		m_lastStepProcessed = 0;
+		System.Diagnostics.Stopwatch budgetWatch = System.Diagnostics.Stopwatch.StartNew();
 		if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != EnvironmentBehaviorMode.Living)
 		{
 			return;
@@ -142,8 +154,8 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 			}
 		}
 		Terrain terrain = SubsystemTerrain.Terrain;
-		int fluidUpdateQuota = m_subsystemGameInfo.WorldSettings.FluidUpdateQuota;
-		int num2 = (TerrainUpdater.IsBusy ? Math.Min(20, fluidUpdateQuota) : fluidUpdateQuota);
+		int num2 = (TerrainUpdater.IsBusy ? Math.Min(20, quota) : quota);
+		int initialNum2 = num2;
 		for (int num3 = 0; num3 < 4; num3++)
 		{
 			if (num2 <= 0)
@@ -151,7 +163,7 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 				break;
 			}
 			Queue<Point3> queue = m_priorityQueues[num3];
-			while (queue.Count > 0 && num2 > 0)
+			while (queue.Count > 0 && num2 > 0 && budgetWatch.Elapsed.TotalMilliseconds < budgetMs)
 			{
 				Point3 point = queue.Dequeue();
 				if (!m_updatePriority.TryGetValue(point, out var _))
@@ -167,7 +179,7 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 					continue;
 				}
 				bool flag = false;
-				if (m_handleBlock == 18 && m_subsystemOceanScanner != null && point.Y <= m_subsystemOceanScanner.OceanLevel && m_subsystemOceanScanner.IsBlockInOcean(point.X, point.Z))
+				if (m_handleBlock == 18 && m_subsystemOceanScanner != null && point.Y <= m_subsystemOceanScanner.OceanLevel && IsColumnInOcean(point.X, point.Z))
 				{
 					flag = true;
 				}
@@ -422,7 +434,7 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 					m_cacheDictionary.Clear();
 					m_cacheHashSet.Clear();
 					int num15 = m_subsystemGameInfo.WorldSettings.FluidSpreadDistance;
-					if (m_handleBlock == 18 && m_subsystemOceanScanner != null && m_subsystemOceanScanner.IsBlockInOcean(point.X, point.Z))
+					if (m_handleBlock == 18 && m_subsystemOceanScanner != null && IsColumnInOcean(point.X, point.Z))
 					{
 						num15 = 9;
 					}
@@ -549,6 +561,7 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 				}
 			}
 		}
+		m_lastStepProcessed = initialNum2 - num2;
 		foreach (KeyValuePair<Point3, SpreadData> item6 in m_toSpread)
 		{
 			Point3 key6 = item6.Key;
@@ -650,6 +663,14 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 
 	public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
 	{
+		if (m_handleBlock == 18 && m_subsystemOceanScanner != null && y <= m_subsystemOceanScanner.OceanLevel && IsColumnInOcean(x, z))
+		{
+			int neighborCellValue = SubsystemTerrain.Terrain.GetCellValueFast(neighborX, neighborY, neighborZ);
+			if (Terrain.ExtractContents(neighborCellValue) == 18 && FocalorsFluidBlock.GetLevel(Terrain.ExtractData(neighborCellValue)) == 0f)
+			{
+				return;
+			}
+		}
 		AddToUpdateQueue(x, y, z, isGeneration: false);
 		if (neighborY == y + 1 || neighborY == y - 1)
 		{
@@ -780,6 +801,26 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 		return MathUtils.Sqrt(num);
 	}
 
+	protected bool IsColumnInOcean(int x, int z)
+	{
+		if (m_subsystemOceanScanner == null)
+		{
+			return false;
+		}
+		long key = ((long)x << 32) | (uint)z;
+		if (m_oceanColumnCache.TryGetValue(key, out var value))
+		{
+			return value;
+		}
+		value = m_subsystemOceanScanner.IsBlockInOcean(x, z);
+		if (m_oceanColumnCache.Count >= 16384)
+		{
+			m_oceanColumnCache.Clear();
+		}
+		m_oceanColumnCache[key] = value;
+		return value;
+	}
+
 	private float GetNeighborLevel(int val, float defaultLvl)
 	{
 		if (Terrain.ExtractContents(val) != m_handleBlock)
@@ -878,7 +919,7 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 
 	public override void OnBlockGenerated(int value, int x, int y, int z, bool isLoaded)
 	{
-		if (m_handleBlock != 18 || m_subsystemOceanScanner == null || y > m_subsystemOceanScanner.OceanLevel || !m_subsystemOceanScanner.IsBlockInOcean(x, z))
+		if (m_handleBlock != 18 || m_subsystemOceanScanner == null || y > m_subsystemOceanScanner.OceanLevel || !IsColumnInOcean(x, z))
 		{
 			AddToUpdateQueue(x, y, z, isGeneration: true);
 		}
@@ -981,7 +1022,7 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 			}
 			int cellValueFast = keyValuePair.GetCellValueFast(num3, num4, num5);
 			int num6 = Terrain.ExtractContents(cellValueFast);
-			if (m_handleBlock == 18 && m_subsystemOceanScanner != null && num4 <= m_subsystemOceanScanner.OceanLevel + 1 && m_subsystemOceanScanner.IsBlockInOcean(num3, num5) && (num6 == 0 || num6 == m_handleBlock))
+			if (m_handleBlock == 18 && m_subsystemOceanScanner != null && num4 <= m_subsystemOceanScanner.OceanLevel + 1 && IsColumnInOcean(num3, num5) && (num6 == 0 || num6 == m_handleBlock))
 			{
 				flag = true;
 				continue;
@@ -1123,12 +1164,20 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 		Point3 point = new Point3(x, y, z);
 		if (isGeneration)
 		{
-			if (!m_updatePriority.ContainsKey(point))
+			if (m_priorityQueues[3].Count < 8192 && !m_updatePriority.ContainsKey(point))
 			{
 				m_updatePriority.Add(point, 3);
 				m_priorityQueues[3].Enqueue(point);
 			}
 			return;
+		}
+		if (m_handleBlock == 18 && m_subsystemOceanScanner != null && y <= m_subsystemOceanScanner.OceanLevel && IsColumnInOcean(x, z))
+		{
+			int cellValue = SubsystemTerrain.Terrain.GetCellValueFast(x, y, z);
+			if (Terrain.ExtractContents(cellValue) == 18 && FocalorsFluidBlock.GetLevel(Terrain.ExtractData(cellValue)) == 0f)
+			{
+				return;
+			}
 		}
 		double gameTime = SubsystemTime.GameTime;
 		if (gameTime - m_lastCacheUpdateTime > 0.25)

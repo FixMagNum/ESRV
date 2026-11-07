@@ -30,6 +30,8 @@ public class SubsystemFocalorsWaterBlockBehavior : SubsystemFocalorsFluidBlockBe
 
 	public HashSet<Pickable> m_candidates = new HashSet<Pickable>();
 
+	private readonly List<Pickable> m_candidateSnapshot = new List<Pickable>();
+
 	private new SubsystemOceanScanner m_subsystemOceanScanner;
 
 	private float m_surfVol;
@@ -57,13 +59,21 @@ public class SubsystemFocalorsWaterBlockBehavior : SubsystemFocalorsFluidBlockBe
 		m_random = new Random();
 	}
 
+
+	private int m_spreadQuotaLeft;
+
 	public void Update(float dt)
 	{
 		if (SubsystemTime.PeriodicGameTimeEvent(0.25, 0.0))
 		{
-			SpreadFluid();
+			m_spreadQuotaLeft = m_subsystemGameInfo.WorldSettings.FluidUpdateQuota;
 		}
-		if (SubsystemTime.PeriodicGameTimeEvent(0.5, 0.0))
+		if (m_spreadQuotaLeft > 0)
+		{
+			SpreadFluidStep(2.0, m_spreadQuotaLeft);
+			m_spreadQuotaLeft -= Math.Max(1, m_lastStepProcessed);
+		}
+		if (SubsystemTime.PeriodicGameTimeEvent(1.0, 0.18))
 		{
 			CalculateSoundParams();
 		}
@@ -74,11 +84,11 @@ public class SubsystemFocalorsWaterBlockBehavior : SubsystemFocalorsFluidBlockBe
 		m_subsystemAmbientSounds.RiverFightVolume = MathUtils.Max(m_subsystemAmbientSounds.RiverFightVolume, m_fightVol);
 		m_subsystemAmbientSounds.RiverWhirlpoolVolume = MathUtils.Max(m_subsystemAmbientSounds.RiverWhirlpoolVolume, m_whirlVol);
 		m_subsystemAmbientSounds.FermentationSoundVolume = MathUtils.Max(m_subsystemAmbientSounds.FermentationSoundVolume, m_boilVol);
-		if (SubsystemTime.PeriodicGameTimeEvent(0.1, 0.0))
+		if (SubsystemTime.PeriodicGameTimeEvent(0.1, 0.03))
 		{
 			UpdateSteamParticles(dt);
 		}
-		if (SubsystemTime.PeriodicGameTimeEvent(0.25, 0.0))
+		if (SubsystemTime.PeriodicGameTimeEvent(0.25, 0.125))
 		{
 			ProcessBoiling();
 		}
@@ -246,8 +256,14 @@ public class SubsystemFocalorsWaterBlockBehavior : SubsystemFocalorsFluidBlockBe
 
 	private void ProcessBoiling()
 	{
+		if (m_candidates.Count == 0)
+		{
+			return;
+		}
 		double totalElapsedGameTime = m_subsystemGameInfo.TotalElapsedGameTime;
-		foreach (Pickable item in m_candidates.ToList())
+		m_candidateSnapshot.Clear();
+		m_candidateSnapshot.AddRange(m_candidates);
+		foreach (Pickable item in m_candidateSnapshot)
 		{
 			if (item.ToRemove)
 			{
@@ -372,7 +388,7 @@ public class SubsystemFocalorsWaterBlockBehavior : SubsystemFocalorsFluidBlockBe
 								float num15 = SubsystemAudio.CalculateVolume((float)Math.Sqrt(num14), 10f, 1f);
 								if (num15 > 0.01f)
 								{
-									if (m_subsystemOceanScanner.IsBlockInOcean(i, j))
+									if (IsColumnInOcean(i, j))
 									{
 										float currentWindStrength = m_subsystemWeather.CurrentWindStrength;
 										m_surfVol = MathUtils.Max(m_surfVol, num15 * (1f - MathUtils.Saturate(currentWindStrength / 8f)));
