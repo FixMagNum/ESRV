@@ -179,7 +179,7 @@ public class MessagePackage : IPackage
 						{
 							if (From.PlayerData.ServerManager)
 							{
-								string text3 = "Админские команды:\n/ban <игрок> - Забанить\n/unban <игрок> - Разбанить\n/banlist - Список забаненных\n/kick <игрок> - Кикнуть\n/kickall - Кикнуть всех кроме ServerManager\n/mute <игрок> - Выдать мут\n/unmute <игрок> - Снять мут\n/mutelist - Список замученных\n/tpp <игрок> - ТП к игроку (мгновенно, без /tpa)\n/tpto <игрок> - ТП игрока к себе\n/gmc / /gms - Креатив (опасно) / Выживание\n/god <игрок> on/off - Вкл/выкл бессмертие\n/fly - Вкл/выкл полёт + бессмертие себе\n/level <игрок> <число> - Выдать уровень (не сразу обновит)\n/op / /deop <игрок> - СерверМенеджер\n/oplist - Список ServerManager\n/delete fire/pickable - Очистка огня/мусора\n/kill <игрок> - Убить\n/password \"пароль\" - Установить пароль на сервер (clear - убрать)\n/clear <игрок> - Очистка перса в 0\n/weather clear/rain/thunder - Погода\n/h <игрок> - Вылечить\n/v - Ваниш (невидимость)";
+								string text3 = "Админские команды:\n/ban <игрок> - Забанить\n/unban <игрок> - Разбанить\n/banlist - Список забаненных\n/kick <игрок> - Кикнуть\n/kickall - Кикнуть всех кроме ServerManager\n/mute <игрок> - Выдать мут\n/unmute <игрок> - Снять мут\n/mutelist - Список замученных\n/tpp <игрок> - ТП к игроку (мгновенно, без /tpa)\n/tpto <игрок> - ТП игрока к себе\n/gmc / /gms - Креатив (опасно) / Выживание\n/god <игрок> on/off - Вкл/выкл бессмертие\n/fly - Вкл/выкл полёт + бессмертие себе\n/level <игрок> <число> - Выдать уровень (работает и для оффлайн-игроков)\n/op / /deop <игрок> - СерверМенеджер\n/oplist - Список ServerManager\n/delete fire/pickable - Очистка огня/мусора\n/kill <игрок> - Убить\n/password \"пароль\" - Установить пароль на сервер (clear - убрать)\n/clear <игрок> - Очистка перса в 0\n/weather clear/rain/thunder - Погода\n/h <игрок> - Вылечить\n/v - Ваниш (невидимость)";
 								SendPrivateMessage(From, text3, netNode);
 							}
 							else
@@ -824,14 +824,18 @@ public class MessagePackage : IPackage
 											SendPrivateMessage(From, "Неверный формат уровня.", netNode);
 											break;
 										}
-										List<ComponentPlayer> list8 = projectNet.FindSubsystem<SubsystemPlayers>().ComponentPlayers.Where((ComponentPlayer p) => string.Equals(p.PlayerData.Name, targetPlayerName3, StringComparison.OrdinalIgnoreCase)).ToList();
-										if (list8.Count == 0)
+										PlayerData targetPlayerData = projectNet.FindSubsystem<SubsystemPlayers>().FindPlayerData((PlayerData p) => p.Name.Equals(targetPlayerName3, StringComparison.OrdinalIgnoreCase));
+										if (targetPlayerData == null)
 										{
 											SendPrivateMessage(From, "Игрок не найден.", netNode);
 										}
 										else
 										{
-											list8.First().PlayerData.Level = result4;
+											targetPlayerData.Level = result4;
+											if (targetPlayerData.Client != null && targetPlayerData.ComponentPlayer != null)
+											{
+												netNode.QueuePackage(new ComponentPlayerPackage(targetPlayerData, 0, playSound: true, targetPlayerData.Level));
+											}
 											SendPrivateMessage(From, "Level set to " + result4.ToString("0.00") + " for " + targetPlayerName3, netNode);
 											Log.Information("Level set to " + result4.ToString("0.00") + " for " + targetPlayerName3);
 										}
@@ -851,16 +855,15 @@ public class MessagePackage : IPackage
 								string targetName5 = m_message.Substring(4).Trim();
 								if (From.PlayerData.IsServerAdmin)
 								{
-									List<ComponentPlayer> list9 = projectNet.FindSubsystem<SubsystemPlayers>().ComponentPlayers.Where((ComponentPlayer p) => p.PlayerData.Name.Equals(targetName5, StringComparison.OrdinalIgnoreCase)).ToList();
-									if (list9.Count == 0)
+									PlayerData opTarget = projectNet.FindSubsystem<SubsystemPlayers>().FindPlayerData((PlayerData p) => p.Name.Equals(targetName5, StringComparison.OrdinalIgnoreCase));
+									if (opTarget == null)
 									{
 										SendPrivateMessage(From, "Игрок не найден.", netNode);
 									}
 									else
 									{
-										ComponentPlayer componentPlayer8 = list9.First();
-										componentPlayer8.PlayerData.ServerManager = true;
-										SendPrivateMessage(From, componentPlayer8.PlayerData.Name + " is now a Server Manager.", netNode);
+										opTarget.ServerManager = true;
+										SendPrivateMessage(From, opTarget.Name + " is now a Server Manager.", netNode);
 									}
 								}
 								else
@@ -873,16 +876,15 @@ public class MessagePackage : IPackage
 								string targetName6 = m_message.Substring(6).Trim();
 								if (From.PlayerData.IsServerAdmin)
 								{
-									List<ComponentPlayer> list10 = projectNet.FindSubsystem<SubsystemPlayers>().ComponentPlayers.Where((ComponentPlayer p) => p.PlayerData.Name.Equals(targetName6, StringComparison.OrdinalIgnoreCase)).ToList();
-									if (list10.Count == 0)
+									PlayerData deopTarget = projectNet.FindSubsystem<SubsystemPlayers>().FindPlayerData((PlayerData p) => p.Name.Equals(targetName6, StringComparison.OrdinalIgnoreCase));
+									if (deopTarget == null)
 									{
 										SendPrivateMessage(From, "Игрок не найден.", netNode);
 									}
 									else
 									{
-										ComponentPlayer componentPlayer9 = list10.First();
-										componentPlayer9.PlayerData.ServerManager = false;
-										SendPrivateMessage(From, componentPlayer9.PlayerData.Name + " is no longer a Server Manager.", netNode);
+										deopTarget.ServerManager = false;
+										SendPrivateMessage(From, deopTarget.Name + " is no longer a Server Manager.", netNode);
 									}
 								}
 								else

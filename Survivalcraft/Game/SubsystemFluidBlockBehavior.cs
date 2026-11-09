@@ -382,6 +382,10 @@ public abstract class SubsystemFluidBlockBehavior : SubsystemBlockBehavior
 
 	public void Set(int x, int y, int z, int value)
 	{
+		if (y < 0 || y >= 256)
+		{
+			return;
+		}
 		Point3 key = new Point3(x, y, z);
 		if (!m_toSet.ContainsKey(key))
 		{

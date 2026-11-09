@@ -53,6 +53,10 @@ public class SubsystemFencePollableBlockBehavior : SubsystemPollableBlockBehavio
 
 	public override void OnPoll(int value, int x, int y, int z, int pollPass)
 	{
+		if (m_subsystemWeather == null)
+		{
+			return;
+		}
 		if (m_random.Float(0f, 1f) < 0.25f)
 		{
 			PrecipitationShaftInfo precipitationShaftInfo = m_subsystemWeather.GetPrecipitationShaftInfo(x, z);
