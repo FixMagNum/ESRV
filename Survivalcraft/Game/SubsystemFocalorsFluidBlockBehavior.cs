@@ -46,9 +46,11 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 
 	private Queue<Point3>[] m_priorityQueues;
 
+	private readonly List<Point3> m_generationOverflow = new List<Point3>();
+	
+
 	public SubsystemFluidDynamics m_subsystemFluidDynamics;
 
-	private static Dictionary<int, double> m_lastLogTimes;
 
 	private Dictionary<Point3, int> m_updatePriority;
 
@@ -57,6 +59,8 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 	private List<Point2> m_cachedPlayerPositions = new List<Point2>();
 
 	private readonly Dictionary<long, bool> m_oceanColumnCache = new Dictionary<long, bool>();
+
+	private static Dictionary<int, double> m_lastLogTimes = new Dictionary<int, double>();
 
 
 	public SubsystemAudio SubsystemAudio { get; set; }
@@ -105,6 +109,16 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 	public void SpreadFluidStep(double budgetMs, int quota)
 	{
 		m_lastStepProcessed = 0;
+		while (m_generationOverflow.Count > 0 && m_priorityQueues[3].Count < 8192)
+		{
+			Point3 overflowPoint = m_generationOverflow[m_generationOverflow.Count - 1];
+			m_generationOverflow.RemoveAt(m_generationOverflow.Count - 1);
+			if (!m_updatePriority.ContainsKey(overflowPoint))
+			{
+				m_updatePriority.Add(overflowPoint, 3);
+				m_priorityQueues[3].Enqueue(overflowPoint);
+			}
+		}
 		System.Diagnostics.Stopwatch budgetWatch = System.Diagnostics.Stopwatch.StartNew();
 		if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != EnvironmentBehaviorMode.Living)
 		{
@@ -707,7 +721,6 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 			new Point3(0, 0, 1),
 			new Point3(0, 0, -1)
 		};
-		m_lastLogTimes = new Dictionary<int, double>();
 		m_sideNeighbors = new Point2[4]
 		{
 			new Point2(-1, 0),
@@ -1164,10 +1177,17 @@ public abstract class SubsystemFocalorsFluidBlockBehavior : SubsystemPollableBlo
 		Point3 point = new Point3(x, y, z);
 		if (isGeneration)
 		{
-			if (m_priorityQueues[3].Count < 8192 && !m_updatePriority.ContainsKey(point))
+			if (!m_updatePriority.ContainsKey(point))
 			{
-				m_updatePriority.Add(point, 3);
-				m_priorityQueues[3].Enqueue(point);
+				if (m_priorityQueues[3].Count < 8192)
+				{
+					m_updatePriority.Add(point, 3);
+					m_priorityQueues[3].Enqueue(point);
+				}
+				else if (m_generationOverflow.Count < 200000)
+				{
+					m_generationOverflow.Add(point);
+				}
 			}
 			return;
 		}
